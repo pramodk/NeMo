@@ -24,6 +24,7 @@ from typing_extensions import Self
 from nemo.lightning.fabric.conversion import to_fabric
 from nemo.lightning.fabric.fabric import Fabric
 from nemo.lightning.io.mixin import IOMixin, serialization, track_io
+from megatron.core.dist_checkpointing.megprofiler import dckpt_timer
 
 
 class NoValOnRestartTrainingLoop(_TrainingEpochLoop):
@@ -43,6 +44,7 @@ class NoValOnRestartTrainingLoop(_TrainingEpochLoop):
 
         self.skip_val_on_restart = True
 
+    @dckpt_timer.profile("advance-nemo-trainer")
     def advance(self, data_fetcher: _DataFetcher) -> None:
         super().advance(data_fetcher)
 

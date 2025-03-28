@@ -25,6 +25,7 @@ from lightning.fabric.utilities.cloud_io import get_filesystem
 from lightning.fabric.utilities.types import _PATH
 from lightning.pytorch import Callback
 from lightning.pytorch.plugins.io.wrapper import _WrappingCheckpointIO
+from megatron.core.dist_checkpointing.megprofiler import dckpt_timer
 
 from nemo.utils import logging
 
@@ -170,6 +171,7 @@ class AsyncFinalizerCallback(Callback):
     On train_end performs a blocking finalization of all pending checkpoints.
     """
 
+    @dckpt_timer.profile("on_train_batch_end-nemo-utils")
     def on_train_batch_end(self, trainer: "pl.Trainer", *args, **kwargs) -> None:
         """Override hook to finalize pending checkpoint(s) if they exist."""
         self._get_checkpoint_io(trainer).maybe_finalize_save_checkpoint(blocking=False)
@@ -178,6 +180,7 @@ class AsyncFinalizerCallback(Callback):
         """Override hook to finalize pending checkpoint(s) if they exist."""
         self._get_checkpoint_io(trainer).maybe_finalize_save_checkpoint(blocking=False)
 
+    @dckpt_timer.profile("on_train_end-nemo-utils")
     def on_train_end(self, trainer: "pl.Trainer", *args, **kwargs) -> None:
         """Override hook to finalize pending checkpoint(s) if they exist."""
         checkpoint_io = self._get_checkpoint_io(trainer)
