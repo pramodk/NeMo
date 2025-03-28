@@ -61,6 +61,7 @@ from nemo.lightning.ckpt_utils import ckpt_to_context_subdir
 from nemo.lightning.pytorch.callbacks import PEFT, JitTransform, ModelTransform
 from nemo.utils import logging
 from nemo.utils.get_rank import is_global_rank_zero
+from megatron.core.dist_checkpointing.megprofiler import dckpt_timer
 
 if TYPE_CHECKING:
     from megatron.core.inference.common_inference_params import CommonInferenceParams
@@ -71,6 +72,7 @@ TokenizerType = Any
 AnyPath = Union[Path, str]
 
 
+@dckpt_timer.profile("train-nemo")
 @run.cli.entrypoint(namespace="llm")
 def train(
     model: Union[pl.LightningModule, AnyPath],

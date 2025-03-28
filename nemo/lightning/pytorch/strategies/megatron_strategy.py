@@ -54,6 +54,7 @@ from lightning.pytorch.trainer.states import RunningStage, TrainerFn
 from lightning.pytorch.utilities.types import STEP_OUTPUT
 from megatron.core import Timers
 from megatron.core.dist_checkpointing.validation import StrictHandling
+from megatron.core.dist_checkpointing.megprofiler import dckpt_timer
 from megatron.core.distributed import DistributedDataParallelConfig
 from megatron.core.optimizer import OptimizerConfig
 from torch import nn
@@ -741,6 +742,7 @@ class MegatronStrategy(DDPStrategy, io.IOMixin):
             model_chunk.train()
 
     @override
+    @dckpt_timer.profile("training_step")
     def training_step(self, dataloader_iter, *args: Any, **kwargs: Any) -> STEP_OUTPUT:
         """Runs one training step"""
         assert self.lightning_module is not None
@@ -813,6 +815,7 @@ class MegatronStrategy(DDPStrategy, io.IOMixin):
             return out
 
     @override
+    @dckpt_timer.profile("optimizer_step")
     def optimizer_step(
         self,
         optimizer: torch.optim.Optimizer,
@@ -833,6 +836,7 @@ class MegatronStrategy(DDPStrategy, io.IOMixin):
         return optimizer_output
 
     @override
+    @dckpt_timer.profile("validation_step")
     def validation_step(self, dataloader_iter, *args: Any, **kwargs: Any) -> STEP_OUTPUT:
         """Runs one validation step"""
         assert self.lightning_module is not None
@@ -861,6 +865,7 @@ class MegatronStrategy(DDPStrategy, io.IOMixin):
             return out
 
     @override
+    @dckpt_timer.profile("test_step")
     def test_step(self, dataloader_iter, *args: Any, **kwargs: Any) -> STEP_OUTPUT:
         """Runs one test step"""
         assert self.lightning_module is not None
@@ -870,6 +875,7 @@ class MegatronStrategy(DDPStrategy, io.IOMixin):
             return self.model.test_step(dataloader_iter, *args, **kwargs)
 
     @override
+    @dckpt_timer.profile("predict_step")
     def predict_step(self, dataloader_iter, *args: Any, **kwargs: Any) -> STEP_OUTPUT:
         """Runs one prediction step"""
         assert self.lightning_module is not None
@@ -992,6 +998,7 @@ class MegatronStrategy(DDPStrategy, io.IOMixin):
             storage_options["finalize_fn"]()
 
     @override
+    @dckpt_timer.profile("save_checkpoint-nemo-strategy")
     def save_checkpoint(
         self, checkpoint: Dict[str, Any], filepath: Union[str, Path], storage_options: Optional[Any] = None
     ) -> None:

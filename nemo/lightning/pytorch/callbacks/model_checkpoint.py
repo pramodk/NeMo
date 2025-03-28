@@ -32,6 +32,7 @@ from nemo.lightning.ckpt_utils import ckpt_to_dir
 from nemo.lightning.io.pl import TrainerContext
 from nemo.utils import logging
 from nemo.utils.app_state import AppState
+from megatron.core.dist_checkpointing.megprofiler import dckpt_timer
 
 
 class ModelCheckpoint(PTLModelCheckpoint):
@@ -122,6 +123,7 @@ class ModelCheckpoint(PTLModelCheckpoint):
             **kwargs,
         )
 
+    @dckpt_timer.profile("modelcheckpoint-on_train_start")
     def on_train_start(self, trainer, pl_module):
         """
         Initializes checkpointing by handling previous runs,
@@ -199,6 +201,7 @@ class ModelCheckpoint(PTLModelCheckpoint):
 
         super().on_train_start(trainer, pl_module)
 
+    @dckpt_timer.profile("modelcheckpoint-nemo_topk_check_previous_run")
     def nemo_topk_check_previous_run(self):
         """
         Verifies and cleans up the top-k checkpoint state from previous training runs.
@@ -268,6 +271,7 @@ class ModelCheckpoint(PTLModelCheckpoint):
         self.best_model_path = best_k_models[0]
         self.best_model_score = self.best_k_models[self.best_model_path]
 
+    @dckpt_timer.profile("modelcheckpoint-remove_invalid_entries_from_topk")
     def _remove_invalid_entries_from_topk(self):
         """
         Removes invalid (incomplete or non-existing) checkpoints from the list of top-k checkpoints.
@@ -306,6 +310,7 @@ class ModelCheckpoint(PTLModelCheckpoint):
             self.best_model_path = ""
             self.best_model_score = None
 
+    @dckpt_timer.profile("modelcheckpoint-state_dict")
     def state_dict(self):
         """
         Returns the state dictionary of the model.
@@ -323,6 +328,7 @@ class ModelCheckpoint(PTLModelCheckpoint):
             state["last_model_path"] = self.future_last_model_path
         return state
 
+    @dckpt_timer.profile("modelcheckpoint-load_state_dict")
     def load_state_dict(self, state_dict: Dict[str, Any]) -> None:
         """
         Loads the state dictionary into the model and removes invalid entries from the top-k checkpoints.
@@ -336,6 +342,7 @@ class ModelCheckpoint(PTLModelCheckpoint):
         super().load_state_dict(state_dict)
         self._remove_invalid_entries_from_topk()
 
+    @dckpt_timer.profile("modelcheckpoint-setup")
     def setup(self, trainer, *args, **kwargs) -> None:
         """
         Initializes the model and removes any unfinished checkpoints before training.
@@ -361,6 +368,7 @@ class ModelCheckpoint(PTLModelCheckpoint):
         self.async_save = getattr(trainer.strategy, "async_save", False)
         super().setup(trainer, *args, **kwargs)
 
+    @dckpt_timer.profile("modelcheckpoint-on_train_end")
     def on_train_end(self, trainer, pl_module):
         """
         Handles actions to be performed when training ends, such as saving the last checkpoint.
@@ -402,6 +410,7 @@ class ModelCheckpoint(PTLModelCheckpoint):
         # Call parent on_train_end() to save the -last checkpoint
         super().on_train_end(trainer, pl_module)
 
+    @dckpt_timer.profile("modelcheckpoint-del_model_without_trainer")
     def _del_model_without_trainer(self, filepath: str) -> None:
         """
         Deletes the checkpoint model directory from distributed storage without requiring the trainer.
@@ -427,6 +436,7 @@ class ModelCheckpoint(PTLModelCheckpoint):
         if torch.distributed.is_initialized():
             torch.distributed.barrier()
 
+    @dckpt_timer.profile("modelcheckpoint-ema_callback")
     def _ema_callback(self, trainer: 'lightning.pytorch.Trainer'):
         """
         Retrieves the Exponential Moving Average (EMA) callback from the list of trainer callbacks.
@@ -450,6 +460,7 @@ class ModelCheckpoint(PTLModelCheckpoint):
         return ema_callback
 
     @staticmethod
+    @dckpt_timer.profile("modelcheckpoint-format_checkpoint_unfinished_marker_path")
     def format_checkpoint_unfinished_marker_path(checkpoint_path: Union[Path, str]) -> Path:
         """Format the path to the unfinished checkpoint marker file.
 
@@ -468,6 +479,7 @@ class ModelCheckpoint(PTLModelCheckpoint):
         return Path(marker_filepath + ModelCheckpoint.UNFINISHED_CHECKPOINT_SUFFIX)
 
     @staticmethod
+    @dckpt_timer.profile("modelcheckpoint-is_checkpoint_unfinished")
     def is_checkpoint_unfinished(checkpoint_path: Union[Path, str]) -> bool:
         """Check if the checkpoint is unfinished.
 
@@ -481,6 +493,7 @@ class ModelCheckpoint(PTLModelCheckpoint):
         return ModelCheckpoint.format_checkpoint_unfinished_marker_path(checkpoint_path).exists()
 
     @staticmethod
+    @dckpt_timer.profile("modelcheckpoint-set_checkpoint_unfinished_marker")
     def set_checkpoint_unfinished_marker(checkpoint_path: Union[Path, str], barrier_after=False) -> None:
         """Marks given checkpoint as unfinished.
 
@@ -500,6 +513,7 @@ class ModelCheckpoint(PTLModelCheckpoint):
             torch.distributed.barrier()
 
     @staticmethod
+    @dckpt_timer.profile("modelcheckpoint-remove_checkpoint_unfinished_marker")
     def remove_checkpoint_unfinished_marker(checkpoint_path: Union[Path, str], barrier_before=False) -> None:
         """Clear unfinished marker for given checkpoint.
 
@@ -526,6 +540,7 @@ class ModelCheckpoint(PTLModelCheckpoint):
         exists = self._fs.exists(filepath) or (check_dist_ckpt and self._fs.exists(str(ckpt_to_dir(filepath))))
         return trainer.strategy.broadcast(exists)
 
+    @dckpt_timer.profile("modelcheckpoint-monitor_candidates")
     def _monitor_candidates(self, trainer: "pl.Trainer") -> Dict[str, torch.Tensor]:
         """Broadcast loss from last pipeline stage."""
         monitor_candidates = super()._monitor_candidates(trainer)
@@ -543,6 +558,7 @@ class ModelCheckpoint(PTLModelCheckpoint):
 
         return monitor_candidates
 
+    @dckpt_timer.profile("modelcheckpoint-link_checkpoint")
     def _link_checkpoint(self, trainer: "pl.Trainer", filepath: str, linkpath: str, override_async=False) -> None:
         """Check to see whether this step has already been saved as top_k
         in which case we can create a symlink
@@ -562,6 +578,7 @@ class ModelCheckpoint(PTLModelCheckpoint):
         linkpath = ckpt_to_dir(linkpath)
         super()._link_checkpoint(trainer, filepath, linkpath)
 
+    @dckpt_timer.profile("modelcheckpoint-save_checkpoint")
     def _save_checkpoint(self, trainer: 'lightning.pytorch.Trainer', filepath: str) -> None:
         """Saves the checkpoint to the given filepath
 
@@ -690,6 +707,7 @@ class ModelCheckpoint(PTLModelCheckpoint):
 
         return _cb
 
+    @dckpt_timer.profile("modelcheckpoint-remove_checkpoint")
     def _remove_checkpoint(self, trainer: "lightning.pytorch.Trainer", filepath: str, override_async=False) -> None:
         """Performs checkpoint removal.
 
