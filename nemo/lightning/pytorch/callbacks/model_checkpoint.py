@@ -310,7 +310,6 @@ class ModelCheckpoint(PTLModelCheckpoint):
             self.best_model_path = ""
             self.best_model_score = None
 
-    @dckpt_timer.profile("modelcheckpoint-state_dict")
     def state_dict(self):
         """
         Returns the state dictionary of the model.
@@ -342,7 +341,6 @@ class ModelCheckpoint(PTLModelCheckpoint):
         super().load_state_dict(state_dict)
         self._remove_invalid_entries_from_topk()
 
-    @dckpt_timer.profile("modelcheckpoint-setup")
     def setup(self, trainer, *args, **kwargs) -> None:
         """
         Initializes the model and removes any unfinished checkpoints before training.
@@ -436,7 +434,6 @@ class ModelCheckpoint(PTLModelCheckpoint):
         if torch.distributed.is_initialized():
             torch.distributed.barrier()
 
-    @dckpt_timer.profile("modelcheckpoint-ema_callback")
     def _ema_callback(self, trainer: 'lightning.pytorch.Trainer'):
         """
         Retrieves the Exponential Moving Average (EMA) callback from the list of trainer callbacks.
@@ -460,7 +457,6 @@ class ModelCheckpoint(PTLModelCheckpoint):
         return ema_callback
 
     @staticmethod
-    @dckpt_timer.profile("modelcheckpoint-format_checkpoint_unfinished_marker_path")
     def format_checkpoint_unfinished_marker_path(checkpoint_path: Union[Path, str]) -> Path:
         """Format the path to the unfinished checkpoint marker file.
 
@@ -493,7 +489,6 @@ class ModelCheckpoint(PTLModelCheckpoint):
         return ModelCheckpoint.format_checkpoint_unfinished_marker_path(checkpoint_path).exists()
 
     @staticmethod
-    @dckpt_timer.profile("modelcheckpoint-set_checkpoint_unfinished_marker")
     def set_checkpoint_unfinished_marker(checkpoint_path: Union[Path, str], barrier_after=False) -> None:
         """Marks given checkpoint as unfinished.
 
@@ -513,7 +508,6 @@ class ModelCheckpoint(PTLModelCheckpoint):
             torch.distributed.barrier()
 
     @staticmethod
-    @dckpt_timer.profile("modelcheckpoint-remove_checkpoint_unfinished_marker")
     def remove_checkpoint_unfinished_marker(checkpoint_path: Union[Path, str], barrier_before=False) -> None:
         """Clear unfinished marker for given checkpoint.
 
@@ -540,7 +534,6 @@ class ModelCheckpoint(PTLModelCheckpoint):
         exists = self._fs.exists(filepath) or (check_dist_ckpt and self._fs.exists(str(ckpt_to_dir(filepath))))
         return trainer.strategy.broadcast(exists)
 
-    @dckpt_timer.profile("modelcheckpoint-monitor_candidates")
     def _monitor_candidates(self, trainer: "pl.Trainer") -> Dict[str, torch.Tensor]:
         """Broadcast loss from last pipeline stage."""
         monitor_candidates = super()._monitor_candidates(trainer)
