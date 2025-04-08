@@ -137,7 +137,7 @@ def train(
     )
 
     trainer.fit(model, data)
-
+    dckpt_timer.report()
     return app_state.exp_dir
 
 
