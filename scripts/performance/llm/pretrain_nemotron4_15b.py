@@ -103,6 +103,9 @@ if __name__ == "__main__":
         args, num_nodes, mbs, gbs, tp_size, pp_size, cp_size, vp_size, ep_size, enable_cuda_graphs
     )
 
+    import fiddle
+    train_fn_obj = fiddle.build(recipe)
+    train_fn_obj()
 
     '''
     exp_config = f"{num_nodes}nodes_tp{tp_size}_pp{pp_size}_cp{cp_size}_vp{vp_size}_{mbs}mbs_{gbs}gbs"
