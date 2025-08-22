@@ -136,6 +136,12 @@ if __name__ == "__main__":
         use_sharp,
     )
 
+
+    import fiddle
+    train_fn_obj = fiddle.build(recipe)
+    train_fn_obj()
+
+    '''
     exp_config = f"{num_nodes}nodes_tp{tp_size}_pp{pp_size}_cp{cp_size}_vp{vp_size}_{mbs}mbs_{gbs}gbs"
     exp_name = f"{splitext(basename(__file__))[0]}_{args.compute_dtype}_{exp_config}"
 
@@ -182,3 +188,4 @@ if __name__ == "__main__":
             exp.run(sequential=True, detach=True)
         else:
             exp.dryrun()
+    '''
