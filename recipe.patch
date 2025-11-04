@@ -1,0 +1,42 @@
+diff --git a/scripts/performance/llm/pretrain_llama3_8b.py b/scripts/performance/llm/pretrain_llama3_8b.py
+index b7dc2a16a..45aedc2b4 100644
+--- a/scripts/performance/llm/pretrain_llama3_8b.py
++++ b/scripts/performance/llm/pretrain_llama3_8b.py
+@@ -142,6 +142,11 @@ if __name__ == "__main__":
+         use_sharp,
+     )
+ 
++    import fiddle
++    train_fn_obj = fiddle.build(recipe)
++    train_fn_obj()
++
++    '''
+     exp_config = f"{num_nodes}nodes_tp{tp_size}_pp{pp_size}_cp{cp_size}_vp{vp_size}_{mbs}mbs_{gbs}gbs"
+     exp_name = f"{splitext(basename(__file__))[0]}_{args.compute_dtype}_{exp_config}"
+ 
+@@ -181,3 +186,4 @@ if __name__ == "__main__":
+             exp.run(sequential=True, detach=True)
+         else:
+             exp.dryrun()
++    '''
+diff --git a/scripts/performance/llm/pretrain_nemotron4_340b.py b/scripts/performance/llm/pretrain_nemotron4_340b.py
+index ecf4f002b..960686790 100644
+--- a/scripts/performance/llm/pretrain_nemotron4_340b.py
++++ b/scripts/performance/llm/pretrain_nemotron4_340b.py
+@@ -168,6 +168,11 @@ if __name__ == "__main__":
+         activation_offload_layers,
+     )
+ 
++    import fiddle
++    train_fn_obj = fiddle.build(recipe)
++    train_fn_obj()
++
++    '''
+     exp_config = f"gpus{args.num_gpus}_tp{tp_size}_pp{pp_size}_cp{cp_size}_vp{vp_size}_mbs{mbs}_gbs{gbs}"
+     exp_name = f"{splitext(basename(__file__))[0]}_{args.compute_dtype}_{exp_config}"
+ 
+@@ -220,3 +225,4 @@ if __name__ == "__main__":
+             exp.run(sequential=True, detach=True)
+         else:
+             exp.dryrun()
++    '''
