@@ -1,5 +1,26 @@
+diff --git a/scripts/performance/llm/pretrain_llama3_70b.py b/scripts/performance/llm/pretrain_llama3_70b.py
+index 668c120ceb..99b8a44656 100644
+--- a/scripts/performance/llm/pretrain_llama3_70b.py
++++ b/scripts/performance/llm/pretrain_llama3_70b.py
+@@ -175,6 +175,11 @@ if __name__ == "__main__":
+         use_sharp,
+     )
+ 
++    import fiddle
++    train_fn_obj = fiddle.build(recipe)
++    train_fn_obj()
++
++    '''
+     exp_config = f"{num_nodes}nodes_tp{tp_size}_pp{pp_size}_cp{cp_size}_vp{vp_size}_{mbs}mbs_{gbs}gbs"
+     exp_name = f"{splitext(basename(__file__))[0]}_{args.compute_dtype}_{exp_config}"
+ 
+@@ -214,3 +219,4 @@ if __name__ == "__main__":
+             exp.run(sequential=True, detach=True)
+         else:
+             exp.dryrun()
++    '''
 diff --git a/scripts/performance/llm/pretrain_llama3_8b.py b/scripts/performance/llm/pretrain_llama3_8b.py
-index b7dc2a16a..45aedc2b4 100644
+index b7dc2a16a0..45aedc2b4c 100644
 --- a/scripts/performance/llm/pretrain_llama3_8b.py
 +++ b/scripts/performance/llm/pretrain_llama3_8b.py
 @@ -142,6 +142,11 @@ if __name__ == "__main__":
@@ -20,7 +41,7 @@ index b7dc2a16a..45aedc2b4 100644
              exp.dryrun()
 +    '''
 diff --git a/scripts/performance/llm/pretrain_nemotron4_340b.py b/scripts/performance/llm/pretrain_nemotron4_340b.py
-index ecf4f002b..960686790 100644
+index ecf4f002bd..9606867909 100644
 --- a/scripts/performance/llm/pretrain_nemotron4_340b.py
 +++ b/scripts/performance/llm/pretrain_nemotron4_340b.py
 @@ -168,6 +168,11 @@ if __name__ == "__main__":
